@@ -100,9 +100,9 @@ def main(**options):
 
 
 if __name__ == '__main__':
-
+    st.set_page_config(layout='wide')
     st.title("RYM Interactive Poll Results")
-    st.write(" More features: [Google Colab](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp)")
+    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp)")
 
     dataset = st.sidebar.selectbox('Select Dataset', options_dict_all.keys())
     options_dict = options_dict_all[dataset]
