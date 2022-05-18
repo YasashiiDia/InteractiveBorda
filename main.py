@@ -1,6 +1,3 @@
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,7 +12,7 @@ TOP_WEIGHT_DISTRIBUTION = list(np.linspace(0.1, 0.9, 10)) + list(np.linspace(1, 
 
 
 @st.experimental_memo
-def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent):
+def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent, multiply_by_votes):
     results = pd.DataFrame(index=vote_matrix.index)
     results["Votes"] = vote_matrix.astype(bool).sum(axis=1)
     vote_matrix = vote_matrix.mask(vote_matrix < 0, 1)  # fix unranked ballots
@@ -26,7 +23,8 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
     results["Score"] = score_matrix.sum(axis=1)
     most_votes = max(results["Votes"])
     results["Score"] *= _pop_multiplier(results["Votes"], most_votes, pop_weight)
-    #results["Score"] = results["Score"].round(1)
+    if multiply_by_votes: results["Score"] *= results["Votes"]
+    results["Score"] = results["Score"].round(1)
     results["Score"] += 0.00001 * results["Votes"]  # hacky way of breaking ties by number of votes AND use method="min" for tied votes
     results["Rank"] = results["Score"].rank(ascending=False, method='min').astype(int)
     results["Score"] = results["Score"].round(1)
@@ -56,11 +54,12 @@ def main(**options):
         pop_multiplier = ut.elliptical_pop_multiplier
 
     # Other widgets
-    size_dependent_borda = st.sidebar.checkbox('Size-dependent Borda')
+    size_dependent_borda = st.sidebar.checkbox('Size-dependent Borda count')
+    multiply_by_votes = st.sidebar.checkbox('Multiply by # votes')
 
     # Calculate results
     vote_matrix, meta_df = load_data(**options)
-    results, rvm = get_results_df(vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda)
+    results, rvm = get_results_df(vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda, multiply_by_votes)
 
     # Add metadata
     metacols = options["metacols"] + ["IMGID"]
@@ -76,7 +75,8 @@ def main(**options):
     results.index.name = None
     results = results[["Title"]+cols+["ID"]]
 
-    results = results[:20]
+    n_results = st.sidebar.slider('Results', 0, 250, 20, 10)
+    results = results[:n_results]
     results_styled = results
 
     # show_id = st.sidebar.checkbox('Show title ID')
