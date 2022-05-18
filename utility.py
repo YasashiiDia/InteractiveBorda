@@ -6,6 +6,22 @@ def superellipse(x, n=2, a=1, b=1, size=1):
     return b * (size**n - np.abs(x/a)**n)**(1/n)
 
 
+def linear_pop_multiplier(counts, most_votes, pop_weight):
+    theta = np.linspace(-1 / most_votes, 1 / most_votes, 201)[pop_weight + 100]
+    b = (1 - theta * most_votes) / 2
+    multipliers = theta * counts + b
+    return 2 * multipliers
+
+
+def elliptical_pop_multiplier(counts, most_votes, pop_weight):
+    if pop_weight >= 0:  # mirror superellipse along vertical axis
+        counts = counts + 2 * (most_votes // 2 - counts) + 1 + most_votes % 2
+
+    n = np.linspace(1, 0.1, 101)[np.abs(pop_weight)]
+    multipliers = superellipse(counts - 1, n=n, a=1, b=1 / most_votes,
+                               size=most_votes)  # counts-1 to move superellipse upwards
+    return 2 * multipliers
+
 def tiers_to_avg_rank(vote_matrix):
     for v in vote_matrix:
         val_counts = vote_matrix[v].value_counts().sort_index()[1:] #ignore zeros
