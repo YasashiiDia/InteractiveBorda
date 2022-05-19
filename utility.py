@@ -109,9 +109,8 @@ def get_norm_factor_dict(cc_dict):
 def normalize_results(results):
     cc_dict = st.session_state["cc_dict"]
     norm_factors = get_norm_factor_dict(cc_dict)
-    for cc in cc_dict:
-        if cc in FILM_DECADE_POLLS:
-            id = cc_dict[cc].vote_matrix.index
-            results.loc[id, "Score"] *= norm_factors[cc]
-            results.loc[id, "Votes"] *= norm_factors[cc]
+    for cc in FILM_DECADE_POLLS:
+        id = cc_dict[cc].vote_matrix.index
+        results.loc[id, "Score"] *= norm_factors[cc]
+        results.loc[id, "Votes"] *= norm_factors[cc]
     return results

@@ -38,7 +38,7 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
     return results, vote_matrix
 
 
-#@st.experimental_memo
+@st.experimental_memo
 def load_data(**options):
     dataname = options["dataname"]
     if dataname not in st.session_state["cc_dict"]:
@@ -168,7 +168,7 @@ def main():
 
     if choice == "Interactive Chart":
         if dataset == "Film (Combined)":
-            st.write("Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls.")
+            st.write("Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls. Adjusting the weight seems to be buggy right now...")
         display_interactive_chart(**options_dict)
     elif choice == "Voter Correlations":
         display_correlations(**options_dict)
