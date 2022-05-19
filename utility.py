@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import streamlit as st
 
 def superellipse(x, n=2, a=1, b=1, size=1):
     return b * (size**n - np.abs(x/a)**n)**(1/n)
@@ -77,7 +77,22 @@ def voter_corr(vmc, all_user_votes, voter):
     #results.index.name = "Rank"
     return results
 
+
 def get_ranked_vote_matrix(vote_matrix):
     vote_matrix = vote_matrix.mask(vote_matrix < 0, 1)  # fix unranked ballots
     ranked_vote_matrix = tiers_to_avg_rank(vote_matrix)
     return ranked_vote_matrix
+
+
+def print_df(df, round_score=False, mode="title"):
+    for i in df.index:
+        # diff = a.loc[i,'Diff.']
+        # if diff > 0: color = "green"
+        # elif diff == 0: color = "blue"
+        # else: color = "red"
+        title = df.loc[i,"Title"] if mode == "title" else df.loc[i,"ID"]
+        string = f"[b]{df.loc[i,'Rank']:.0f}.[/b]"
+        if round_score: string += f" {title} | Score: {df.loc[i,'Score']:.0f} | Votes: {df.loc[i,'Votes']:.0f}"
+        else: string += f" {title} | Score: {df.loc[i,'Score']:.1f} | Votes: {df.loc[i,'Votes']:.0f}"
+        #if Display == "RYM Print Diff.": string += f" | [color {color}]{diff:+.0f}[/color]"
+        st.text(string)

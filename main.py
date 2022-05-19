@@ -6,6 +6,7 @@ import streamlit as st
 
 import utility as ut
 import style as sty
+import plots
 from options import options_dict_all
 
 TOP_WEIGHT_DISTRIBUTION = list(np.linspace(0.1, 0.9, 10)) + list(np.linspace(1, 5, 11))
@@ -41,9 +42,9 @@ def load_data(**options):
 def display_interactive_chart(**options):
 
     # Weights
-    top_weight = st.sidebar.slider('Top Weight', -10, 10, 0)
+    top_weight = st.sidebar.slider('Ballot Item Weight', -10, 10, 0)
     top_weight = TOP_WEIGHT_DISTRIBUTION[top_weight + 10]
-    pop_weight = 10*st.sidebar.slider('Pop Weight', -20, 20, 0)
+    pop_weight = 10*st.sidebar.slider('Popularity Weight', -20, 20, 0)
 
     if np.abs(pop_weight) <= 100:
         pop_multiplier = ut.linear_pop_multiplier
@@ -52,8 +53,9 @@ def display_interactive_chart(**options):
         pop_multiplier = ut.elliptical_pop_multiplier
 
     # Other widgets
-    size_dependent_borda = st.sidebar.checkbox('Size-dependent Borda count')
-    multiply_by_votes = st.sidebar.checkbox('Multiply by # votes')
+    plot_weights_choice = st.sidebar.checkbox("Plot weights")
+    size_dependent_borda = st.sidebar.checkbox('Deweight incomplete ballots')
+    multiply_by_votes = st.sidebar.checkbox('Multiply by number of votes')
 
     # Calculate results
     vote_matrix, meta_df = load_data(**options)
@@ -75,8 +77,6 @@ def display_interactive_chart(**options):
     results = results[["Title"]+cols+["ID"]]
 
     n_results = st.sidebar.slider('Results', 0, 250, 20, 10)
-    results = results[:n_results]
-    results_styled = results
 
     # show_id = st.sidebar.checkbox('Show title ID')
     # if not show_id:
@@ -88,8 +88,25 @@ def display_interactive_chart(**options):
     # https://pagination.js.org/
     # https://www.jqueryscript.net/blog/best-table-pagination.html
 
-    table = results_styled.to_html(classes="styled-table", escape=False)
-    st.write(table, unsafe_allow_html=True)
+    if plot_weights_choice:
+        most_votes = results["Votes"].max()
+        most_votes_title = results.sort_values(by="Votes", ascending=False)["Title"].iloc[0]
+        max_length = ranked_vote_matrix.max().max()
+        fig = plots.plot_weights(top_weight, pop_weight, multiply_by_votes, size_dependent_borda, pop_multiplier, most_votes, most_votes_title, max_length)
+        st.pyplot(fig)
+
+    results = results[:n_results]
+    results_styled = results
+
+    display_option = st.sidebar.radio("Display as:", ["Table", "Raw Text", "RYM Print"])
+    if display_option == "Table":
+        table = results_styled.to_html(classes="styled-table", escape=False)
+        st.write(table, unsafe_allow_html=True)
+    elif display_option == "Raw Text":
+        ut.print_df(results_styled, mode="title")
+    elif display_option  == "RYM Print":
+        ut.print_df(results_styled, mode="rym")
+
 
     #results_styled = sty.style_df(results, metacols)
     #st.dataframe(results_styled)
@@ -105,8 +122,17 @@ def display_correlations(method="pearson", **options):
     #vmc = ranked_vote_matrix.corr(method=method)
     all_user_votes = ut.get_votes_df_from_vote_matrix(ranked_vote_matrix)
     voter_corr = ut.voter_corr(vmc, all_user_votes, voter)
-    table = voter_corr.to_html(classes="styled-table", escape=False)
-    st.write(table, unsafe_allow_html=True)
+
+    display_option = st.sidebar.radio("Display as:", ["Table", "Raw Text"])
+    if display_option == "Table":
+        table = voter_corr.to_html(classes="styled-table", escape=False)
+        st.write(table, unsafe_allow_html=True)
+    elif display_option == "Raw Text":
+        a = vmc[voter].sort_values(ascending=False)
+        print_string = ""
+        for v in a.index:
+            print_string += f"{v}: {a.loc[v]:.2f}  \n"
+        st.markdown(print_string)
 
 
 def main():
