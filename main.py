@@ -44,7 +44,10 @@ def load_data(**options):
     if dataname not in st.session_state["cc_dict"]:
         vote_matrix = pd.read_csv(options["vote_matrix_csv"],index_col=[0,1])
         meta_df = pd.read_csv(options["titles_csv"], index_col=[0,1])
-        meta_df["Runtime"] = meta_df["Runtime"].mask(meta_df["Runtime"].isna(),0).astype(int)
+        if "Runtime" in meta_df.columns:
+            meta_df["Runtime"] = meta_df["Runtime"].mask(meta_df["Runtime"].isna(),0).astype(int)
+        if "Episodes" in meta_df.columns:
+            meta_df["Episodes"] = meta_df["Episodes"].mask(meta_df["Episodes"].isna(),0).astype(int)
         st.session_state["cc_dict"][dataname] = CompiledCharts(vote_matrix, meta_df, **options)
     else:
         vote_matrix = st.session_state["cc_dict"][dataname].vote_matrix
@@ -164,6 +167,8 @@ def main():
     options_dict = options_dict_all[dataset]
 
     if choice == "Interactive Chart":
+        if dataset == "Film (Combined)":
+            st.write("Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls.")
         display_interactive_chart(**options_dict)
     elif choice == "Voter Correlations":
         display_correlations(**options_dict)
@@ -174,5 +179,5 @@ if __name__ == '__main__':
     with open("style.css") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     st.title("RYM Interactive Poll Results")
-    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp). Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls.")
+    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp).")
     main()
