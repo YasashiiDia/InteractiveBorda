@@ -106,7 +106,7 @@ def display_interactive_chart(**options):
     if plot_weights_choice:
         most_votes = results["Votes"].max()
         most_votes_title = results.sort_values(by="Votes", ascending=False)["Title"].iloc[0]
-        max_length = ranked_vote_matrix.max().max()
+        max_length = ranked_vote_matrix.max().max() if options["dataname"] != "Film (Combined)" else 200
         fig = plots.plot_weights(top_weight, pop_weight, multiply_by_votes, size_dependent_borda, pop_multiplier, most_votes, most_votes_title, max_length)
         st.pyplot(fig)
 
