@@ -59,3 +59,25 @@ def get_partial_rankings(vote_matrix, size_dependent=False):
     #print("rounding unranked ballots")
     df.loc["Avg_Unranked_Rank"] = df.loc["Avg_Unranked_Rank"].round(0).astype(int) # rounding rank up to 26 => rounding points down to 25
     return df
+
+
+def get_votes_df_from_vote_matrix(vote_matrix):
+  all_user_votes = []
+  for v in vote_matrix:
+    all_user_votes.append(pd.Series(vote_matrix[v][vote_matrix[v] > 0].sort_values().index.get_level_values(level="Title"), name=v))
+  return pd.concat(all_user_votes, axis=1)
+
+
+def voter_corr(vmc, all_user_votes, voter):
+    c = vmc[voter].sort_values(ascending=False)
+    col_arrays = [all_user_votes[c.index].columns, c.values.round(2)]
+    multi_cols = pd.MultiIndex.from_arrays(col_arrays, names=["Voter", "Correlation"])
+    votes = all_user_votes[c.index].values
+    results = pd.DataFrame(votes, index=range(1, len(all_user_votes) + 1), columns=multi_cols, copy=True)
+    #results.index.name = "Rank"
+    return results
+
+def get_ranked_vote_matrix(vote_matrix):
+    vote_matrix = vote_matrix.mask(vote_matrix < 0, 1)  # fix unranked ballots
+    ranked_vote_matrix = tiers_to_avg_rank(vote_matrix)
+    return ranked_vote_matrix

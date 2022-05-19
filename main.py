@@ -15,10 +15,8 @@ TOP_WEIGHT_DISTRIBUTION = list(np.linspace(0.1, 0.9, 10)) + list(np.linspace(1, 
 def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent, multiply_by_votes):
     results = pd.DataFrame(index=vote_matrix.index)
     results["Votes"] = vote_matrix.astype(bool).sum(axis=1)
-    vote_matrix = vote_matrix.mask(vote_matrix < 0, 1)  # fix unranked ballots
-    ranked_vote_matrix = ut.tiers_to_avg_rank(vote_matrix)
-    list_sizes = ut.get_list_sizes_from_vote_matrix(ranked_vote_matrix) if size_dependent else ranked_vote_matrix.max().max()
-    score_matrix = ranked_vote_matrix.mask(ranked_vote_matrix > 0, ut.superellipse(ranked_vote_matrix - 1,
+    list_sizes = ut.get_list_sizes_from_vote_matrix(vote_matrix) if size_dependent else vote_matrix.max().max()
+    score_matrix = vote_matrix.mask(vote_matrix > 0, ut.superellipse(vote_matrix - 1,
                                            n=top_weight, a=1, b=1, size=list_sizes))  # vm-1 to move superellipse upwards
     results["Score"] = score_matrix.sum(axis=1)
     most_votes = max(results["Votes"])
@@ -30,7 +28,7 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
     results["Score"] = results["Score"].round(1)
     results.index.set_names(['ID', 'Title'], inplace=True)
     results.sort_values(by="Rank", inplace=True)
-    return results, ranked_vote_matrix
+    return results, vote_matrix
 
 
 @st.experimental_memo
@@ -40,7 +38,7 @@ def load_data(**options):
     return vote_matrix, meta_df
 
 
-def main(**options):
+def display_interactive_chart(**options):
 
     # Weights
     top_weight = st.sidebar.slider('Top Weight', -10, 10, 0)
@@ -59,7 +57,8 @@ def main(**options):
 
     # Calculate results
     vote_matrix, meta_df = load_data(**options)
-    results, rvm = get_results_df(vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda, multiply_by_votes)
+    ranked_vote_matrix = ut.get_ranked_vote_matrix(vote_matrix)
+    results, rvm = get_results_df(ranked_vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda, multiply_by_votes)
 
     # Add metadata
     metacols = options["metacols"] + ["IMGID"]
@@ -83,9 +82,6 @@ def main(**options):
     # if not show_id:
     #     results_styled = results_styled.hide(axis="index")  # doesn't work with st.dataframe()
 
-    with open("style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
     # https://stackoverflow.com/questions/50807744/apply-css-class-to-pandas-dataframe-using-to-html
     # https://towardsdatascience.com/pagination-in-streamlit-82b62de9f62b
     # https://docs.streamlit.io/library/components/components-api
@@ -99,11 +95,35 @@ def main(**options):
     #st.dataframe(results_styled)
 
 
-if __name__ == '__main__':
-    st.set_page_config(layout='wide')
-    st.title("RYM Interactive Poll Results")
-    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp). Note that the combined film charts are not yet normalized for voter turnout.")
-    dataset = st.sidebar.selectbox('Select Dataset', options_dict_all.keys())
+def display_correlations(method="pearson", **options):
+    vote_matrix, _ = load_data(**options)
+    voter = st.sidebar.selectbox("Select voter:", vote_matrix.columns)
+    method = st.sidebar.radio("Correlation metric:", ["Pearson", "Spearman", "Kendall"])
+    ranked_vote_matrix = ut.get_ranked_vote_matrix(vote_matrix)
+    MAX_LENGTH = vote_matrix.max().max()
+    vmc = ranked_vote_matrix.mask(ranked_vote_matrix > 0, MAX_LENGTH + 1 - ranked_vote_matrix).corr(method=method.lower())
+    #vmc = ranked_vote_matrix.corr(method=method)
+    all_user_votes = ut.get_votes_df_from_vote_matrix(ranked_vote_matrix)
+    voter_corr = ut.voter_corr(vmc, all_user_votes, voter)
+    table = voter_corr.to_html(classes="styled-table", escape=False)
+    st.write(table, unsafe_allow_html=True)
+
+
+def main():
+    choice = st.sidebar.radio("", ["Interactive Chart", "Voter Correlations"])
+    dataset = st.sidebar.selectbox('Select dataset:', options_dict_all.keys())
     options_dict = options_dict_all[dataset]
 
-    main(**options_dict)
+    if choice == "Interactive Chart":
+        display_interactive_chart(**options_dict)
+    elif choice == "Voter Correlations":
+        display_correlations(**options_dict)
+
+
+if __name__ == '__main__':
+    st.set_page_config(layout='wide')
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    st.title("RYM Interactive Poll Results")
+    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp). Note that the combined film charts are not yet normalized for voter turnout.")
+    main()
