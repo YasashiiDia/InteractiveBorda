@@ -8,18 +8,24 @@ import utility as ut
 import style as sty
 import plots
 from options import options_dict_all
+from CompiledCharts import CompiledCharts
 
 TOP_WEIGHT_DISTRIBUTION = list(np.linspace(0.1, 0.9, 10)) + list(np.linspace(1, 5, 11))
 
 
 @st.experimental_memo
-def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent, multiply_by_votes):
+def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent, multiply_by_votes, normalize=False):
     results = pd.DataFrame(index=vote_matrix.index)
     results["Votes"] = vote_matrix.astype(bool).sum(axis=1)
     list_sizes = ut.get_list_sizes_from_vote_matrix(vote_matrix) if size_dependent else vote_matrix.max().max()
     score_matrix = vote_matrix.mask(vote_matrix > 0, ut.superellipse(vote_matrix - 1,
                                            n=top_weight, a=1, b=1, size=list_sizes))  # vm-1 to move superellipse upwards
     results["Score"] = score_matrix.sum(axis=1)
+
+    if normalize:
+        results = ut.normalize_results(results)
+        results["Votes"] = results["Votes"].round(0)
+
     most_votes = max(results["Votes"])
     results["Score"] *= _pop_multiplier(results["Votes"], most_votes, pop_weight)
     if multiply_by_votes: results["Score"] *= results["Votes"]
@@ -34,8 +40,15 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
 
 @st.experimental_memo
 def load_data(**options):
-    vote_matrix = pd.read_csv(options["vote_matrix_csv"],index_col=[0,1])
-    meta_df = pd.read_csv(options["titles_csv"], index_col=[0,1])
+    dataname = options["dataname"]
+    if dataname not in st.session_state["cc_dict"]:
+        vote_matrix = pd.read_csv(options["vote_matrix_csv"],index_col=[0,1])
+        meta_df = pd.read_csv(options["titles_csv"], index_col=[0,1])
+        meta_df["Runtime"] = meta_df["Runtime"].mask(meta_df["Runtime"].isna(),0).astype(int)
+        st.session_state["cc_dict"][dataname] = CompiledCharts(vote_matrix, meta_df, **options)
+    else:
+        vote_matrix = st.session_state["cc_dict"][dataname].vote_matrix
+        meta_df = st.session_state["cc_dict"][dataname].meta_df
     return vote_matrix, meta_df
 
 
@@ -60,7 +73,7 @@ def display_interactive_chart(**options):
     # Calculate results
     vote_matrix, meta_df = load_data(**options)
     ranked_vote_matrix = ut.get_ranked_vote_matrix(vote_matrix)
-    results, rvm = get_results_df(ranked_vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda, multiply_by_votes)
+    results, rvm = get_results_df(ranked_vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda, multiply_by_votes, options["normalize"])
 
     # Add metadata
     metacols = options["metacols"] + ["IMGID"]
@@ -68,13 +81,12 @@ def display_interactive_chart(**options):
     results = pd.concat([results, meta_df_display], axis=1)
 
     # Style results
-    cols = results.columns.to_list()
-    cols.remove("IMGID")
+    cols = results.columns.drop(["IMGID","Votes","Rank"]).to_list()
     results["ID"] = results.index.get_level_values(level=0)
     results["Title"] = results.index.get_level_values(level=1)
     results.index = results["IMGID"].apply(sty.path_to_tmdb_image_html)
     results.index.name = None
-    results = results[["Title"]+cols+["ID"]]
+    results = results[["Title","Rank","Votes"]+cols+["ID"]]
 
     n_results = st.sidebar.slider('Results', 0, 250, 20, 10)
 
@@ -104,7 +116,7 @@ def display_interactive_chart(**options):
         st.write(table, unsafe_allow_html=True)
     elif display_option == "Raw Text":
         ut.print_df(results_styled, mode="title")
-    elif display_option  == "RYM Print":
+    elif display_option == "RYM Print":
         ut.print_df(results_styled, mode="rym")
 
 
@@ -134,8 +146,19 @@ def display_correlations(method="pearson", **options):
             print_string += f"{v}: {a.loc[v]:.2f}  \n"
         st.markdown(print_string)
 
+@st.experimental_memo
+def init_film():
+    FILM_DECADE_POLLS = ["Film (1980s)", "Film (1990s)", "Film (2000s)", "Film (2010s)"]
+    for decade in FILM_DECADE_POLLS:
+        load_data(**options_dict_all[decade])
+
 
 def main():
+    if 'cc_dict' not in st.session_state:
+        st.session_state["cc_dict"] = {}
+
+    init_film()
+
     choice = st.sidebar.radio("", ["Interactive Chart", "Voter Correlations"])
     dataset = st.sidebar.selectbox('Select dataset:', options_dict_all.keys())
     options_dict = options_dict_all[dataset]
@@ -151,5 +174,5 @@ if __name__ == '__main__':
     with open("style.css") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     st.title("RYM Interactive Poll Results")
-    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp). Note that the combined film charts are not yet normalized for voter turnout.")
+    st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp). Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls.")
     main()

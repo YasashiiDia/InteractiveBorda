@@ -5,7 +5,8 @@ options = {"default_delimiter": ". ",
             "remove_original_title": True,
             "database_id": "TMDB_id",
             "finalchar": "]",
-            "link": "https://www.themoviedb.org/movie/"}
+            "link": "https://www.themoviedb.org/movie/",
+            "normalize": False}
 
 options_film_2010s = options.copy()
 options_film_2010s["dataname"] = 'Film (2010s)'
@@ -55,6 +56,7 @@ options_film_combined["metacols"] = ['Release','Runtime','Genres','Language','Di
 options_film_combined["type"] = "Film"
 options_film_combined["DEFAULT_RANK_OPTION"] = "BORDA_RANK_CLASSIC"
 options_film_combined["print"] = "ID"
+options_film_combined["normalize"] = True
 
 options_anime_series = options.copy()
 options_anime_series["dataname"] = 'Anime Series'

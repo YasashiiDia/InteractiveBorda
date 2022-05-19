@@ -96,3 +96,22 @@ def print_df(df, round_score=False, mode="title"):
         else: string += f" {title} | Score: {df.loc[i,'Score']:.1f} | Votes: {df.loc[i,'Votes']:.0f}"
         #if Display == "RYM Print Diff.": string += f" | [color {color}]{diff:+.0f}[/color]"
         st.text(string)
+
+
+FILM_DECADE_POLLS = ["Film (1980s)","Film (1990s)", "Film (2000s)", "Film (2010s)"]
+def get_norm_factor_dict(cc_dict):
+    """Normalization factors for combined charts"""
+    max_votes = np.array([len(cc_dict[cc].vote_matrix.columns) for cc in FILM_DECADE_POLLS])
+    norm_factors = max(max_votes)/max_votes
+    return {cc: norm_factors[i] for i, cc in enumerate(FILM_DECADE_POLLS)}
+
+
+def normalize_results(results):
+    cc_dict = st.session_state["cc_dict"]
+    norm_factors = get_norm_factor_dict(cc_dict)
+    for cc in cc_dict:
+        if cc in FILM_DECADE_POLLS:
+            id = cc_dict[cc].vote_matrix.index
+            results.loc[id, "Score"] *= norm_factors[cc]
+            results.loc[id, "Votes"] *= norm_factors[cc]
+    return results
