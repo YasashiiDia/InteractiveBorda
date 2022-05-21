@@ -154,8 +154,12 @@ def display_correlations(method="pearson", **options):
         st.markdown(print_string)
 
 
-@st.experimental_memo(suppress_st_warning=True)
+#@st.experimental_memo(suppress_st_warning=True)
 def init_film():
+    for decade in FILM_DECADE_POLLS:
+        if decade not in st.session_state["cc_dict"]:
+            break
+    else: return
     st.write("Init")
     for decade in FILM_DECADE_POLLS:
         load_data(**options_dict_all[decade])
