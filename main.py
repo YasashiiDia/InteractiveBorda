@@ -48,7 +48,7 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
     return results, vote_matrix
 
 
-@st.experimental_memo
+#@st.experimental_memo
 def load_data(**options):
     dataname = options["dataname"]
     if dataname not in st.session_state["cc_dict"]:
@@ -154,10 +154,12 @@ def display_correlations(method="pearson", **options):
         st.markdown(print_string)
 
 
-@st.experimental_memo
+@st.experimental_memo(suppress_st_warning=True)
 def init_film():
+    st.write("Init")
     for decade in FILM_DECADE_POLLS:
         load_data(**options_dict_all[decade])
+    st.write(st.session_state,2)
 
 
 def main():
