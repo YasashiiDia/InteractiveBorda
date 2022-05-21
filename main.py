@@ -159,12 +159,10 @@ def init_film():
     for decade in FILM_DECADE_POLLS:
         if decade not in st.session_state["cc_dict"]:
             break
-    else: return
-    st.write("Init")
+    else:
+        return
     for decade in FILM_DECADE_POLLS:
         load_data(**options_dict_all[decade])
-    st.write(st.session_state,2)
-
 
 def main():
     if 'cc_dict' not in st.session_state:
@@ -175,8 +173,6 @@ def main():
     choice = st.sidebar.radio("", ["Interactive Chart", "Voter Correlations"])
     dataset = st.sidebar.selectbox('Select dataset:', options_dict_all.keys())
     options_dict = options_dict_all[dataset]
-
-    if dataset == "Film (Combined)": st.write(st.session_state["cc_dict"].keys())
 
     if choice == "Interactive Chart":
         if dataset == "Film (Combined)":
@@ -193,4 +189,4 @@ if __name__ == '__main__':
     st.title("RYM Interactive Poll Results")
     st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp).")
     main()
-    st.write(st.session_state)
+    st.write("Diagnostic",st.session_state)
