@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+
 def superellipse(x, n=2, a=1, b=1, size=1):
     return b * (size**n - np.abs(x/a)**n)**(1/n)
 
@@ -98,15 +99,16 @@ def print_df(df, round_score=False, mode="title"):
         st.text(string)
 
 
-FILM_DECADE_POLLS = ["Film (1980s)","Film (1990s)", "Film (2000s)", "Film (2010s)"]
 def get_norm_factor_dict(cc_dict):
     """Normalization factors for combined charts"""
+    from main import FILM_DECADE_POLLS
     max_votes = np.array([len(cc_dict[cc].vote_matrix.columns) for cc in FILM_DECADE_POLLS])
     norm_factors = max(max_votes)/max_votes
     return {cc: norm_factors[i] for i, cc in enumerate(FILM_DECADE_POLLS)}
 
 
 def normalize_results(results):
+    from main import FILM_DECADE_POLLS
     cc_dict = st.session_state["cc_dict"]
     norm_factors = get_norm_factor_dict(cc_dict)
     for cc in FILM_DECADE_POLLS:

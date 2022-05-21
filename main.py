@@ -11,10 +11,20 @@ from options import options_dict_all
 from CompiledCharts import CompiledCharts
 
 TOP_WEIGHT_DISTRIBUTION = list(np.linspace(0.1, 0.9, 10)) + list(np.linspace(1, 5, 11))
-
+FILM_DECADE_POLLS = ["Film (1980s)", "Film (1990s)", "Film (2000s)", "Film (2010s)"]
 
 @st.experimental_memo
 def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent, multiply_by_votes, normalize=False):
+    """
+    :param pandas.DataFrame vote_matrix: Tiers in vote matrix should be converted to ranks using prepare_data.ipynb
+    :param float top_weight:
+    :param float pop_weight:
+    :param function _pop_multiplier:
+    :param bool size_dependent:
+    :param bool multiply_by_votes:
+    :param bool normalize:
+    :return:
+    """
     results = pd.DataFrame(index=vote_matrix.index)
     results["Votes"] = vote_matrix.astype(bool).sum(axis=1)
     list_sizes = ut.get_list_sizes_from_vote_matrix(vote_matrix) if size_dependent else vote_matrix.max().max()
@@ -74,8 +84,7 @@ def display_interactive_chart(**options):
     multiply_by_votes = st.sidebar.checkbox('Multiply by number of votes')
 
     # Calculate results
-    vote_matrix, meta_df = load_data(**options)
-    ranked_vote_matrix = ut.get_ranked_vote_matrix(vote_matrix)
+    ranked_vote_matrix, meta_df = load_data(**options)
     results, rvm = get_results_df(ranked_vote_matrix, top_weight, pop_weight, pop_multiplier, size_dependent_borda, multiply_by_votes, options["normalize"])
 
     # Add metadata
@@ -90,12 +99,7 @@ def display_interactive_chart(**options):
     results.index = results["IMGID"].apply(sty.path_to_tmdb_image_html)
     results.index.name = None
     results = results[["Title","Rank","Votes"]+cols+["ID"]]
-
     n_results = st.sidebar.slider('Results', 0, 250, 20, 10)
-
-    # show_id = st.sidebar.checkbox('Show title ID')
-    # if not show_id:
-    #     results_styled = results_styled.hide(axis="index")  # doesn't work with st.dataframe()
 
     # https://stackoverflow.com/questions/50807744/apply-css-class-to-pandas-dataframe-using-to-html
     # https://towardsdatascience.com/pagination-in-streamlit-82b62de9f62b
@@ -111,30 +115,30 @@ def display_interactive_chart(**options):
         st.pyplot(fig)
 
     results = results[:n_results]
-    results_styled = results
 
     display_option = st.sidebar.radio("Display as:", ["Table", "Raw Text", "RYM Print"])
     if display_option == "Table":
-        table = results_styled.to_html(classes="styled-table", escape=False)
+        table = results.to_html(classes="styled-table", escape=False)
         st.write(table, unsafe_allow_html=True)
     elif display_option == "Raw Text":
-        ut.print_df(results_styled, mode="title")
+        ut.print_df(results, mode="title")
     elif display_option == "RYM Print":
-        ut.print_df(results_styled, mode="rym")
+        ut.print_df(results, mode="rym")
 
 
+    # show_id = st.sidebar.checkbox('Show title ID')
+    # if not show_id:
+    #     results_styled = results_styled.hide(axis="index")  # doesn't work with st.dataframe()
     #results_styled = sty.style_df(results, metacols)
     #st.dataframe(results_styled)
 
 
 def display_correlations(method="pearson", **options):
-    vote_matrix, _ = load_data(**options)
-    voter = st.sidebar.selectbox("Select voter:", vote_matrix.columns)
+    ranked_vote_matrix, _ = load_data(**options)
+    voter = st.sidebar.selectbox("Select voter:", ranked_vote_matrix.columns)
     method = st.sidebar.radio("Correlation metric:", ["Pearson", "Spearman", "Kendall"])
-    ranked_vote_matrix = ut.get_ranked_vote_matrix(vote_matrix)
-    MAX_LENGTH = vote_matrix.max().max()
+    MAX_LENGTH = ranked_vote_matrix.max().max()
     vmc = ranked_vote_matrix.mask(ranked_vote_matrix > 0, MAX_LENGTH + 1 - ranked_vote_matrix).corr(method=method.lower())
-    #vmc = ranked_vote_matrix.corr(method=method)
     all_user_votes = ut.get_votes_df_from_vote_matrix(ranked_vote_matrix)
     voter_corr = ut.voter_corr(vmc, all_user_votes, voter)
 
@@ -149,9 +153,9 @@ def display_correlations(method="pearson", **options):
             print_string += f"{v}: {a.loc[v]:.2f}  \n"
         st.markdown(print_string)
 
+
 @st.experimental_memo
 def init_film():
-    FILM_DECADE_POLLS = ["Film (1980s)", "Film (1990s)", "Film (2000s)", "Film (2010s)"]
     for decade in FILM_DECADE_POLLS:
         load_data(**options_dict_all[decade])
 

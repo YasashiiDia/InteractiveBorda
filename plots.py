@@ -14,7 +14,9 @@ def plot_weights(top_weight, pop_weight, multiply_by_votes, size_dependent_borda
     ax[0].plot([1, max_length], [max_length, 1], label="Borda", ls="--", c="grey")
     ax[0].scatter(x, y,label=f"Ballot N={max_length:.0f}")
     if size_dependent_borda:
-        ax[0].scatter(x[:len(x)//2], y[:len(x)//2]-len(x)//2, label=f"Ballot N={max_length//2:.0f}")
+        x_short = x[:len(x)//2]
+        y_short = ut.superellipse(x_short - 1, n=top_weight, a=1, b=1, size=max_length//2)
+        ax[0].scatter(x_short, y_short, label=f"Ballot N={max_length//2:.0f}")
     ax[0].set_xlabel("Item Position")
     ax[0].set_ylabel("Points")
     ax[0].set_ylim(0, 1.1 * max_length)
