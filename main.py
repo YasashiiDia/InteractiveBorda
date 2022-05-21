@@ -52,7 +52,7 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
 def load_data(**options):
     dataname = options["dataname"]
     if dataname not in st.session_state["cc_dict"]:
-        vote_matrix = pd.read_csv(options["vote_matrix_csv"],index_col=[0,1])
+        vote_matrix = pd.read_csv(options["vote_matrix_csv"], index_col=[0,1])
         meta_df = pd.read_csv(options["titles_csv"], index_col=[0,1])
         if "Runtime" in meta_df.columns:
             meta_df["Runtime"] = meta_df["Runtime"].mask(meta_df["Runtime"].isna(),0).astype(int)
@@ -169,6 +169,8 @@ def main():
     choice = st.sidebar.radio("", ["Interactive Chart", "Voter Correlations"])
     dataset = st.sidebar.selectbox('Select dataset:', options_dict_all.keys())
     options_dict = options_dict_all[dataset]
+
+    if dataset == "Film Combined": st.write(st.session_state["cc_dict"].keys())
 
     if choice == "Interactive Chart":
         if dataset == "Film (Combined)":
