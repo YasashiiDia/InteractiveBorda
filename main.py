@@ -29,7 +29,7 @@ def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_de
     results["Votes"] = vote_matrix.astype(bool).sum(axis=1)
     list_sizes = ut.get_list_sizes_from_vote_matrix(vote_matrix) if size_dependent else vote_matrix.max().max()
     score_matrix = vote_matrix.mask(vote_matrix > 0, ut.superellipse(vote_matrix - 1,
-                                           n=top_weight, a=1, b=1, size=list_sizes))  # vm-1 to move superellipse upwards
+                                    n=top_weight, a=1, b=1, size=list_sizes))  # vm-1 to move superellipse upwards
     results["Score"] = score_matrix.sum(axis=1)
 
     if normalize:
@@ -110,12 +110,15 @@ def display_interactive_chart(**options):
     if plot_weights_choice:
         most_votes = results["Votes"].max()
         most_votes_title = results.sort_values(by="Votes", ascending=False)["Title"].iloc[0]
-        max_length = ranked_vote_matrix.max().max() if options["dataname"] != "Film (Combined)" else 200
+        max_length = ranked_vote_matrix.max().max() if options["dataname"] != "Film (Combined)" else 50
         fig = plots.plot_weights(top_weight, pop_weight, multiply_by_votes, size_dependent_borda, pop_multiplier, most_votes, most_votes_title, max_length)
         st.pyplot(fig)
 
+    n_voters = len(ranked_vote_matrix.columns)
+    n_titles = len(results)
+    votes = ranked_vote_matrix.astype(bool).sum().sum()
+    st.write(f"**Voters:** {n_voters} | **Titles:** {n_titles} | **Votes:** {votes}" + (f"$\quad$(unadjusted)" if options["dataname"] == "Film (Combined)" else ""))
     results = results[:n_results]
-
     display_option = st.sidebar.radio("Display as:", ["Table", "Raw Text", "RYM Print"])
     if display_option == "Table":
         table = results.to_html(classes="styled-table", escape=False)
@@ -176,7 +179,7 @@ def main():
 
     if choice == "Interactive Chart":
         if dataset == "Film (Combined)":
-            st.write("Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls. Adjusting the weight seems to be buggy right now...")
+            st.write("Note that the combined film charts are normalized to adjust for differences in voter turnout between the decade polls.")
         display_interactive_chart(**options_dict)
     elif choice == "Voter Correlations":
         display_correlations(**options_dict)
@@ -189,4 +192,4 @@ if __name__ == '__main__':
     st.title("RYM Interactive Poll Results")
     st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp).")
     main()
-    st.write("Diagnostic",st.session_state)
+    st.write("Diagnostic", st.session_state)

@@ -73,9 +73,10 @@ def voter_corr(vmc, all_user_votes, voter):
     c = vmc[voter].sort_values(ascending=False)
     col_arrays = [all_user_votes[c.index].columns, c.values.round(2)]
     multi_cols = pd.MultiIndex.from_arrays(col_arrays, names=["Voter", "Correlation"])
-    votes = all_user_votes[c.index].values
-    results = pd.DataFrame(votes, index=range(1, len(all_user_votes) + 1), columns=multi_cols, copy=True)
-    #results.index.name = "Rank"
+    voter_ballot_size = len(all_user_votes[voter].dropna())
+    votes = all_user_votes[c.index].iloc[:voter_ballot_size].values
+    index = range(1, voter_ballot_size + 1)
+    results = pd.DataFrame(votes, index=index, columns=multi_cols, copy=True)
     return results
 
 
