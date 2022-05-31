@@ -121,7 +121,7 @@ def display_interactive_chart(**options):
     results = results[:n_results]
     display_option = st.sidebar.radio("Display as:", ["Table", "Raw Text", "RYM Print"])
     if display_option == "Table":
-        table = results.to_html(classes="styled-table", escape=False)
+        table = results.to_html(classes=["styled-table"], escape=False)
         st.write(table, unsafe_allow_html=True)
     elif display_option == "Raw Text":
         ut.print_df(results, mode="title")
@@ -187,9 +187,15 @@ def main():
 
 if __name__ == '__main__':
     st.set_page_config(layout='wide')
+
     with open("style.css") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     st.title("RYM Interactive Poll Results")
     st.write("Very early work in progress. More features can be found in the [Google Colab Notebook](https://colab.research.google.com/drive/1hOq6fSF2a7t00FXl-KBUVlYifpz9ZkHp).")
     main()
-    st.write("Diagnostic", st.session_state)
+    #st.write("Diagnostic", st.session_state)
+
+    # from streamlit.components.v1 import html
+    # https://docs.streamlit.io/library/components/components-api
+    # ag-grid images: https://discuss.streamlit.io/t/ag-grid-component-with-input-support/8108/63
+    # sorttable scroll: http://output.jsbin.com/enotac/2
