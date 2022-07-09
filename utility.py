@@ -87,16 +87,31 @@ def get_ranked_vote_matrix(vote_matrix):
 
 
 def print_df(df, round_score=False, mode="title"):
+
     for i in df.index:
         # diff = a.loc[i,'Diff.']
         # if diff > 0: color = "green"
         # elif diff == 0: color = "blue"
         # else: color = "red"
-        title = df.loc[i,"Title"] if mode == "title" else df.loc[i,"ID"]
-        string = f"[b]{df.loc[i,'Rank']:.0f}.[/b]"
-        if round_score: string += f" {title} | Score: {df.loc[i,'Score']:.0f} | Votes: {df.loc[i,'Votes']:.0f}"
-        else: string += f" {title} | Score: {df.loc[i,'Score']:.1f} | Votes: {df.loc[i,'Votes']:.0f}"
+        duplicate_image_detected = False
+        try:
+            rank = df.loc[i, 'Rank']
+            score = df.loc[i, 'Score']
+            votes = df.loc[i, 'Votes']
+            f"[b]{rank:.0f}.[/b]"
+            title = df.loc[i, "Title"] if mode == "title" else df.loc[i, "ID"]
+        except TypeError:
+            rank = df.loc[i, 'Rank'][0]
+            score = df.loc[i, 'Score'][0]
+            votes = df.loc[i, 'Votes'][0]
+            title = df.loc[i, "Title"][0] if mode == "title" else df.loc[i, "ID"][0]
+            duplicate_image_detected =  True
+        string = f"[b]{rank:.0f}.[/b]"
+        if round_score: string += f" {title} | Score: {score:.0f} | Votes: {votes:.0f}"
+        else: string += f" {title} | Score: {score:.1f} | Votes: {votes:.0f}"
         #if Display == "RYM Print Diff.": string += f" | [color {color}]{diff:+.0f}[/color]"
+
+        if duplicate_image_detected: string += " (warning: duplicate image detected)"
         st.text(string)
 
 

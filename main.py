@@ -128,7 +128,10 @@ def display_interactive_chart(**options):
     elif display_option == "RYM Print":
         ut.print_df(results, mode="rym")
 
-
+    dupes = results.loc[results.index.duplicated(keep=False)]
+    if len(dupes) > 0:
+        st.write("Duplicated images found:")
+        st.dataframe(dupes)
     # show_id = st.sidebar.checkbox('Show title ID')
     # if not show_id:
     #     results_styled = results_styled.hide(axis="index")  # doesn't work with st.dataframe()
