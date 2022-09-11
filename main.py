@@ -11,7 +11,7 @@ from options import options_dict_all
 from CompiledCharts import CompiledCharts
 
 TOP_WEIGHT_DISTRIBUTION = list(np.linspace(0.1, 0.9, 10)) + list(np.linspace(1, 5, 11))
-FILM_DECADE_POLLS = ["Film (1980s)", "Film (1990s)", "Film (2000s)", "Film (2010s)"]
+FILM_DECADE_POLLS = ["Film (1970s)", "Film (1980s)", "Film (1990s)", "Film (2000s)", "Film (2010s)"]
 
 @st.experimental_memo
 def get_results_df(vote_matrix, top_weight, pop_weight, _pop_multiplier, size_dependent, multiply_by_votes, normalize=False):
