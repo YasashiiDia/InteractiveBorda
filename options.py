@@ -48,6 +48,16 @@ options_film_1980s["type"] = "Film"
 options_film_1980s["DEFAULT_RANK_OPTION"] = "BORDA_RANK_CLASSIC"
 options_film_1980s["print"] = "ID"
 
+options_film_1970s = options.copy()
+options_film_1970s["dataname"] = 'Film (1970s)'
+options_film_1970s["SHEETNAME"] = '1970s in film'
+options_film_1970s["vote_matrix_csv"] = "./data/1970s in film_ranked_vote_matrix.csv"
+options_film_1970s["titles_csv"] = "./data/1970s in film_meta_df.csv"
+options_film_1970s["metacols"] = ['Release','Runtime','Genres','Language','Director','Cast','Producer','Writer','Director of Photography','Editor','Composer','Sound Designer','Art Direction','Production Design','Costume Design','Makeup Artist']
+options_film_1970s["type"] = "Film"
+options_film_1970s["DEFAULT_RANK_OPTION"] = "BORDA_RANK_CLASSIC"
+options_film_1970s["print"] = "ID"
+
 options_film_combined = options.copy()
 options_film_combined["dataname"] = 'Film (Combined)'
 options_film_combined["vote_matrix_csv"] = "./data/combined_film_ranked_vote_matrix.csv"
@@ -77,6 +87,7 @@ options_dict_all = {"Film (2010s)": options_film_2010s,
                     "Film (2000s)": options_film_2000s,
                     "Film (1990s)": options_film_1990s,
                     "Film (1980s)": options_film_1980s,
+                    "Film (1970s)": options_film_1970s,
                     "Film (Combined)": options_film_combined,
                     "Anime Series": options_anime_series
                     }
